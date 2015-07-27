@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -35,7 +36,7 @@ public class JavaFileChecker {
 	public JavaFileChecker(File file) {
 		_file = file;
 		_fileHelper = new FileHelper();
-
+		init();
 		try {
 			synchronized (_map) {
 				WeakReference<CompilationUnit> astRef = _map.get(file);
@@ -54,6 +55,75 @@ public class JavaFileChecker {
 		} catch (Exception e) {
 			throw new IllegalArgumentException(e);
 		}
+	}
+
+	private void init(){
+		//type converting : byte , Byte , short , Short , Character , char ——> Integer , int ——> Long , long ——> Float , float ——> Double , double
+		typeMapping = new HashMap<String , List<String>>();
+		List<String> intList = new ArrayList<String>();
+		intList.add("byte");
+		intList.add("Byte");
+		intList.add("short");
+		intList.add("Short");
+		intList.add("char");
+		intList.add("Character");
+		intList.add("Integer");
+		typeMapping.put("int",intList);
+
+		List<String> longList = new ArrayList<String>();
+		longList.addAll(intList);
+		longList.add("int");
+		longList.add("Long");
+		typeMapping.put("long",longList);
+
+		List<String> floatList = new ArrayList<String>();
+		floatList.addAll(longList);
+		floatList.add("long");
+		floatList.add("Float");
+		typeMapping.put("float",floatList);
+
+		List<String> doubleList = new ArrayList<String>();
+		doubleList.addAll(longList);
+		doubleList.add("float");
+		doubleList.add("Double");
+		typeMapping.put("double",doubleList);
+
+		//boolean - Boolean
+		//byte - Byte
+		//short - Short
+		//Character - char
+		//Integer - int
+		//Long - long
+		//Float - float
+		//Double - double
+		typeWrapper = new HashMap<String , String>();
+		typeWrapper.put("boolean", "Boolean");
+		typeWrapper.put("Boolean", "boolean");
+		typeWrapper.put("byte", "Byte");
+		typeWrapper.put("Byte", "byte");
+		typeWrapper.put("Character", "char");
+		typeWrapper.put("char", "Character");
+		typeWrapper.put("short", "Short");
+		typeWrapper.put("Short", "short");
+		typeWrapper.put("Integer", "int");
+		typeWrapper.put("int", "Integer");
+		typeWrapper.put("Long", "long");
+		typeWrapper.put("long", "Long");
+		typeWrapper.put("Float", "float");
+		typeWrapper.put("float", "Float");
+		typeWrapper.put("Double", "double");
+		typeWrapper.put("double", "Double");
+
+		//basicTypes
+		basicTypes = new ArrayList<String>();
+		basicTypes.add("byte");
+		basicTypes.add("short");
+		basicTypes.add("int");
+		basicTypes.add("long");
+		basicTypes.add("char");
+		basicTypes.add("float");
+		basicTypes.add("double");
+		basicTypes.add("boolean");
 	}
 
 	@SuppressWarnings("unchecked")
@@ -313,14 +383,20 @@ public class JavaFileChecker {
 
 								if (argType != null) {
 									//can resolve the type
-									 if( argType.getName().equals(methodParamTypes[i])) {
+									 if( argType.getName().equals(methodParamTypes[i]) || checkTypeMapping(methodParamTypes[i] , argType.getName()) ) {
 										 //type matched
 										continue;
 									 } else {
-										 //type unmatched
-										 possibleMatch = false;
-										 typeMatched = false;
-										 break;
+										 //can resolve the type but have ? in param , just make fullMatch false
+										 if(methodParamTypes[i].contains("?")){
+											 possibleMatch = false;
+											 typeUnresolved = true;
+										 }else{
+											//type unmatched
+											 possibleMatch = false;
+											 typeMatched = false;
+											 break;
+										 }
 									 }
 								} else{
 									possibleMatch = false;
@@ -450,10 +526,25 @@ public class JavaFileChecker {
 		return searchResults;
 	}
 
+	private boolean checkTypeMapping(String declaParam , String resolvedType){
+		List<String> types = typeMapping.get(declaParam);
+		if( ( types != null && types.contains(resolvedType) ) ||
+				resolvedType.equals(typeWrapper.get(declaParam)) ||
+				("null".equals(resolvedType) && !basicTypes.contains(declaParam) )
+				) {
+			return true;
+		}
+		else{
+			return false;
+		}
+	}
+
 	private static Map<File, WeakReference<CompilationUnit>> _map = new WeakHashMap<>();
 
 	private final CompilationUnit _ast;
 	private final File _file;
 	private final FileHelper _fileHelper;
-
+	private Map<String , List<String>> typeMapping;
+	private Map<String , String> typeWrapper;
+	private List<String> basicTypes;
 }

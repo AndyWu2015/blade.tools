@@ -33,7 +33,7 @@ public class AssetTagPropertiesTest {
 				new JavaFileChecker(testFile));
 
 		assertNotNull(results);
-		assertEquals(2, results.size());
+		assertEquals(4, results.size());
 	}
 
 	@Test
