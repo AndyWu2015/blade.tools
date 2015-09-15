@@ -32,11 +32,21 @@ public class XMLFileChecker {
 		}
 	}
 
+	public List<SearchResult> findPK(String tagName, String[] attributes) {
+		SearchExecutor4PK searcher4pk = new SearchExecutor4PK(tagName,
+				attributes);
+		try {
+			_parser.parse(_file, searcher4pk);
+		} catch (SAXException | IOException e) {
+			e.printStackTrace();
+		}
+
+		return searcher4pk.getResults();
+	}
+
 	public List<SearchResult> findTag(String tagName, String value) {
 		// start parsing the given file and generates results
-
 		SearchExecutor searcher = new SearchExecutor(tagName, value);
-
 		try {
 			_parser.parse(_file, searcher);
 		} catch (SAXException | IOException e) {
@@ -99,7 +109,6 @@ public class XMLFileChecker {
 				String uri, String localName, String qName,
 				Attributes attributes)
 			throws SAXException {
-
 			if (_tagName.equals(qName)) {
 				inState = true;
 			}
@@ -113,7 +122,65 @@ public class XMLFileChecker {
 
 		private boolean inState = false;
 		private Locator locator;
+	}
 
+	private class SearchExecutor4PK extends DefaultHandler {
+
+		public SearchExecutor4PK(String tagName , String[] attributes) {
+			_tagName = tagName;
+			_attributes = attributes;
+			_results = new ArrayList<>();
+			_keyValues = new String[_attributes.length][2];
+			for(int i = 0 ; i<_attributes.length ; i++){
+				_keyValues[i] = _attributes[i].split("=");
+			}
+		}
+
+		public List<SearchResult> getResults() {
+			return _results;
+		}
+
+		@Override
+		public void setDocumentLocator(final Locator locator) {
+			this.locator = locator;
+		}
+
+		@Override
+		public void startDocument() throws SAXException {
+			_results.clear();
+		}
+
+		@Override
+		public void startElement(
+				String uri, String localName, String qName,
+				Attributes attributes)
+			throws SAXException {
+			boolean isFind = true;
+			if (!_tagName.equals(qName)) {
+				return ;
+			}
+			for (int i = 0; i < _keyValues.length; i++) {
+				if (!_keyValues[i][1].equals(attributes
+						.getValue(_keyValues[i][0]))) {
+					isFind = false;
+				}
+			}
+			if(isFind){
+				_results.add(
+						new SearchResult(
+							_file, 0, 0, locator.getLineNumber(),
+							locator.getLineNumber(), true));
+			}
+
+
+		}
+
+		private List<SearchResult> _results = null;
+		private String _tagName;
+		private String[] _attributes;
+		private String[][] _keyValues;
+
+		private Locator locator;
 	}
 
 }

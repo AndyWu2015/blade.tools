@@ -7,7 +7,7 @@
 
 		<!-- PK fields -->
 
-		<column name="kbArticleId" type="long" primary="true" />
+		<column name="kbArticleId" type="int" primary="true" />
 
 		<!-- Resource -->
 
@@ -198,7 +198,7 @@
 
 		<!-- PK fields -->
 
-		<column name="kbCommentId" type="long" primary="true" />
+		<column name="kbCommentId" type="short" primary="true" />
 
 		<!-- Group instance -->
 
@@ -265,7 +265,7 @@
 
 		<!-- PK fields -->
 
-		<column name="kbFolderId" type="long" primary="true" />
+		<column name="kbFolderId" type="double" primary="true" />
 
 		<!-- Group instance -->
 
@@ -311,7 +311,7 @@
 
 		<!-- PK fields -->
 
-		<column name="kbTemplateId" type="long" primary="true" />
+		<column name="kbTemplateId" type="boolean" primary="true" />
 
 		<!-- Group instance -->
 
